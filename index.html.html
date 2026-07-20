@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>総当たり対戦・コート自動割り当て 完成版</title>
+<style>
+:root{--bg:#f5f7fb;--card:#fff;--text:#1f2937;--muted:#6b7280;--primary:#2563eb;--primary2:#1d4ed8;--line:#e5e7eb;--ok:#16a34a;--danger:#dc2626;--soft:#eff6ff;--warn:#f59e0b;--monitorBg:#061225;--monitorPanel:#0f2747;--monitorAccent:#38bdf8;--monitorYellow:#facc15}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP",sans-serif;background:var(--bg);color:var(--text)}header{background:linear-gradient(135deg,#1d4ed8,#38bdf8);color:#fff;padding:22px 18px}header h1{margin:0;font-size:24px}header p{margin:8px 0 0;opacity:.95}main{max-width:1260px;margin:18px auto;padding:0 14px 40px}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.tabBtn{background:#e5e7eb;color:#111827}.tabBtn.active{background:var(--primary);color:#fff}.grid{display:grid;grid-template-columns:430px 1fr;gap:14px}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 4px 16px rgba(15,23,42,.06);padding:16px;margin-bottom:14px}h2{font-size:18px;margin:0 0 12px;border-left:5px solid var(--primary);padding-left:10px}h3{font-size:15px;margin:14px 0 8px;color:#374151}label{display:block;font-size:13px;font-weight:700;margin:10px 0 5px}input,textarea{width:100%;border:1px solid #d1d5db;border-radius:10px;padding:11px;font-size:16px;background:#fff}textarea{min-height:96px;resize:vertical;line-height:1.5}button{border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer;background:var(--primary);color:#fff}button:hover{background:var(--primary2)}button.secondary{background:#475569}button.light{background:#e5e7eb;color:#111827}button.ok{background:var(--ok)}button.danger{background:var(--danger)}button.warn{background:var(--warn);color:#111827}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.note{font-size:12px;color:var(--muted);line-height:1.55}.pill{display:inline-block;padding:3px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-size:12px;font-weight:700;margin:2px}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.stat{background:var(--soft);border-radius:12px;padding:10px;text-align:center}.stat b{font-size:22px;color:var(--primary)}.stat span{display:block;font-size:12px;color:var(--muted)}
+.registerBox{background:#f8fbff;border:1px solid #dbeafe;border-radius:14px;padding:12px}.registerGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pairList{margin-top:12px}.listHeader{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}.pairCount{background:#ecfeff;color:#155e75;border:1px solid #a5f3fc;border-radius:999px;padding:6px 10px;font-size:13px;font-weight:900}.pairTableWrap{overflow-x:auto}.pairTable th,.pairTable td{white-space:nowrap}.pairTable input{min-width:120px;padding:8px;font-size:15px}.deleteBtn{background:#fee2e2;color:#991b1b;padding:7px 10px;font-size:13px}.deleteBtn:hover{background:#fecaca}.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#111827;color:#fff;padding:12px 16px;border-radius:999px;font-weight:800;box-shadow:0 10px 25px rgba(0,0,0,.25);display:none;z-index:99}.csvBox{margin-top:10px;background:#f9fafb;border:1px dashed #cbd5e1;border-radius:12px;padding:10px}
+.courts{display:grid;grid-template-columns:repeat(auto-fit,minmax(285px,1fr));gap:12px}.court{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}.courtHead{background:#111827;color:#fff;padding:10px 12px;font-weight:800}.slot{padding:12px;border-top:1px solid var(--line);background:#fff}.slot.empty{background:#f9fafb;color:var(--muted)}.matchTitle{font-weight:800;margin-bottom:8px}.pair{display:flex;justify-content:space-between;gap:8px;margin:5px 0}.pairName{font-weight:700}.scoreBox{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}.scoreBox input{text-align:center;font-size:16px;font-weight:800}.smallBtns{display:flex;gap:6px}.smallBtns button{padding:8px;font-size:12px}table{width:100%;border-collapse:collapse;font-size:13px;background:#fff}th,td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}th{background:#f3f4f6}tbody tr:nth-child(even){background:#fafafa}.right{text-align:right}.center{text-align:center}.statusWaiting{color:#92400e;font-weight:800}.statusPlaying{color:#1d4ed8;font-weight:800}.statusDone{color:#166534;font-weight:800}.hidden{display:none!important}.waitingGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.waitingBox{background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px}.waitingBox h3{margin-top:0}.waitingItem{background:#fff;border:1px solid #ffedd5;border-radius:10px;padding:8px;margin:6px 0;font-weight:800}
+#monitorView{background:var(--monitorBg);color:#fff;border-radius:18px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.25)}.monitorOnlyTools{padding:12px;background:#e0f2fe;display:flex;gap:8px;flex-wrap:wrap}.fullscreenBtn{background:#facc15;color:#111827}.monitorHeader{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:22px;background:linear-gradient(135deg,#071a34,#0f5d8c)}.monitorHeader h1{font-size:34px;letter-spacing:.04em;margin:0}.monitorClock{font-size:22px;font-weight:900;color:#e0f2fe}.monitorBody{padding:18px}.monitorSectionTitle{display:flex;align-items:center;gap:10px;font-size:26px;font-weight:900;margin:8px 0 14px}.monitorSectionTitle .bar{width:10px;height:34px;background:var(--monitorAccent);border-radius:999px}.monitorCourts{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px}.monitorCourt{background:var(--monitorPanel);border:2px solid rgba(56,189,248,.45);border-radius:18px;overflow:hidden}.monitorCourtHead{background:#38bdf8;color:#061225;font-size:26px;font-weight:1000;padding:12px 16px;text-align:center}.monitorSlot{padding:18px;border-top:1px solid rgba(255,255,255,.14)}.monitorSlotLabel{font-size:18px;color:#bae6fd;font-weight:900;margin-bottom:8px}.monitorPair{font-size:30px;font-weight:1000;line-height:1.2}.monitorVs{text-align:center;font-size:22px;color:var(--monitorYellow);font-weight:1000;margin:6px 0}.monitorEmpty{font-size:24px;color:#94a3b8;text-align:center;padding:18px}.monitorNextGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}.monitorNext{background:#172554;border:2px solid rgba(250,204,21,.55);border-radius:18px;padding:16px}.monitorNextNo{display:inline-block;background:var(--monitorYellow);color:#111827;border-radius:999px;padding:4px 12px;font-weight:1000;margin-bottom:8px}.monitorNextPair{font-size:26px;font-weight:1000;line-height:1.25}.monitorFooter{padding:14px 22px;color:#cbd5e1;background:#071a34;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:700}@media(max-width:900px){main{padding:0 10px 30px}.grid{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}.waitingGrid{grid-template-columns:1fr}.registerGrid{grid-template-columns:1fr}.row{display:grid;grid-template-columns:1fr 1fr}.tabs button{flex:1}.monitorHeader{display:block}.monitorHeader h1{font-size:28px}.monitorPair{font-size:24px}.monitorNextPair{font-size:22px}input,button{font-size:16px}header h1{font-size:21px}}@media(max-width:520px){.row{grid-template-columns:1fr}.monitorCourts,.monitorNextGrid{grid-template-columns:1fr}.smallBtns{display:grid;grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<header><h1>総当たり対戦・コート自動割り当て 完成版</h1><p>ペア登録→登録済みリスト追加、削除前確認、自動連番振り直し、スマホ対応、次試合呼出しモニター付き。</p></header>
+<main>
+<div class="tabs"><button id="adminTab" class="tabBtn active" onclick="showTab('admin')">運営入力画面</button><button id="monitorTab" class="tabBtn" onclick="showTab('monitor')">次試合呼出しモニター</button></div>
+<div id="adminView"><div class="grid"><section>
+<div class="card"><h2>① ペア登録</h2><div class="registerBox"><div class="registerGrid"><div><label>選手1</label><input id="newP1" placeholder="例：長瀬" autocomplete="name"></div><div><label>選手2</label><input id="newP2" placeholder="例：山田" autocomplete="name"></div></div><div class="btns"><button class="ok" onclick="registerPair()">登録</button><button class="light" onclick="clearRegisterInputs()">入力クリア</button></div><p class="note">登録ボタンを押すと、下の「登録済みペア一覧」に追加されます。</p></div>
+<div class="csvBox"><h3>CSV一括貼付</h3><textarea id="bulkInput" placeholder="例：\n長瀬,山田\n佐藤,鈴木\n田中,伊藤"></textarea><div class="btns"><button class="secondary" onclick="bulkAddPairs()">一括登録</button></div></div>
+<div class="pairList"><div class="listHeader"><h3>登録済みペア一覧</h3><span class="pairCount" id="pairCount">登録数：0ペア</span></div><div class="pairTableWrap"><table class="pairTable"><thead><tr><th>No</th><th>選手1</th><th>選手2</th><th>ペア名</th><th>操作</th></tr></thead><tbody id="pairTableBody"></tbody></table></div><p class="note">削除後はNo.が自動で振り直されます。</p></div></div>
+<div class="card"><h2>② 大会設定</h2><div class="row"><div><label>コート数</label><input id="courtCount" type="number" min="1" value="2"></div><div><label>1コート同時試合数</label><input id="slotsPerCourt" type="number" min="1" value="2"></div></div><div class="btns"><button onclick="generateTournament()">総当たり作成</button><button class="secondary" onclick="assignMatches()">空き枠へ自動投入</button><button class="danger" onclick="resetAll()">全リセット</button></div><p class="note">スコアは0〜3のみ。マイナス・小数・4以上は不可です。</p></div>
+<div class="card"><h2>進行状況</h2><div class="stats"><div class="stat"><b id="totalMatches">0</b><span>総試合</span></div><div class="stat"><b id="playingMatches">0</b><span>試合中</span></div><div class="stat"><b id="waitingMatches">0</b><span>待機</span></div><div class="stat"><b id="doneMatches">0</b><span>完了</span></div></div><div class="btns"><button class="ok" onclick="exportCSV()">結果CSV出力</button><button class="light" onclick="saveState(true)">保存</button><button class="light" onclick="loadState()">復元</button></div></div>
+</section><section><div class="card"><h2>③ コート割り当て</h2><div id="courts" class="courts"></div></div><div class="card"><h2>④ コート空き待ち表示</h2><div id="waitingArea"></div></div><div class="card"><h2>⑤ 勝率順位表</h2><div id="ranking"></div></div><div class="card"><h2>⑥ 対戦一覧</h2><div id="matchList"></div></div></section></div></div>
+<div id="monitorView" class="hidden"><div class="monitorOnlyTools"><button class="light" onclick="showTab('admin')">運営入力画面へ戻る</button><button class="fullscreenBtn" onclick="toggleFullscreen()">全画面表示</button><button class="light" onclick="render()">表示更新</button></div><div class="monitorHeader"><h1>次試合 呼出しモニター</h1><div class="monitorClock" id="monitorClock">--:--</div></div><div class="monitorBody"><div class="monitorSectionTitle"><span class="bar"></span>現在試合中</div><div id="monitorCourts" class="monitorCourts"></div><div class="monitorSectionTitle" style="margin-top:24px"><span class="bar" style="background:var(--monitorYellow)"></span>次に入る試合</div><div id="monitorNext" class="monitorNextGrid"></div></div><div class="monitorFooter"><div>試合が終わったペアは、運営席まで結果を報告してください。</div><div id="monitorSummary">総試合 0 / 完了 0 / 待機 0</div></div></div>
+<div class="toast" id="toast"></div>
+</main>
+<script>
+let pairEntries=[];let pairs=[];let matches=[];let settings={courtCount:2,slotsPerCourt:2};
+let lastFinishedPairs=new Set();
+
+function uid(){return 'm'+Math.random().toString(36).slice(2,10)}function pairUid(){return 'p'+Math.random().toString(36).slice(2,10)}
+function getSettings(){settings.courtCount=Math.max(1,parseInt(document.getElementById('courtCount').value||1));settings.slotsPerCourt=Math.max(1,parseInt(document.getElementById('slotsPerCourt').value||1))}
+function pairName(p){return `${(p.p1||'').trim()}・${(p.p2||'').trim()}`}function validPair(p){return (p.p1||'').trim()&&(p.p2||'').trim()}function getPairsFromList(){return [...new Set(pairEntries.filter(validPair).map(pairName))]}
+function registerPair(){const p1=document.getElementById('newP1').value.trim();const p2=document.getElementById('newP2').value.trim();if(!p1||!p2){alert('選手1・選手2を入力してください。');return}const name=`${p1}・${p2}`;if(getPairsFromList().includes(name)){alert('同じペアが既に登録されています。');return}pairEntries.push({id:pairUid(),p1,p2});clearRegisterInputs();renderPairList();saveState(false);showToast(`${name} を登録しました`)}
+function clearRegisterInputs(){document.getElementById('newP1').value='';document.getElementById('newP2').value='';document.getElementById('newP1').focus()}
+function bulkAddPairs(){const text=document.getElementById('bulkInput').value.trim();if(!text){alert('一括登録する内容を入力してください。');return}let added=0;const existing=new Set(getPairsFromList());text.split('\n').forEach(line=>{const parts=line.split(/[,【,，\t]/).map(s=>s.trim()).filter(Boolean);if(parts.length>=2){const p1=parts[0],p2=parts[1],name=`${p1}・${p2}`;if(!existing.has(name)){pairEntries.push({id:pairUid(),p1,p2});existing.add(name);added++}}});document.getElementById('bulkInput').value='';renderPairList();saveState(false);showToast(`${added}ペアを一括登録しました`)}
+function updatePair(id,key,value){const p=pairEntries.find(x=>x.id===id);if(!p)return;p[key]=value.trim();renderPairList();saveState(false)}
+function deletePair(id){const idx=pairEntries.findIndex(x=>x.id===id);if(idx<0)return;if(pairEntries.length<=2){alert('ペアは2組以上必要です。');return}const name=pairName(pairEntries[idx]);if(!confirm(`このペアを削除しますか？\n\n${name}`))return;pairEntries.splice(idx,1);renderPairList();saveState(false);showToast(`${name} を削除しました`)}
+function renderPairList(){const tbody=document.getElementById('pairTableBody');tbody.innerHTML='';pairEntries.forEach((p,i)=>{tbody.innerHTML+=`<tr><td class="center"><b>${i+1}</b></td><td><input value="${escapeAttr(p.p1||'')}" onchange="updatePair('${p.id}','p1',this.value)"></td><td><input value="${escapeAttr(p.p2||'')}" onchange="updatePair('${p.id}','p2',this.value)"></td><td><b>${escapeHtml(validPair(p)?pairName(p):'未入力')}</b></td><td><button class="deleteBtn" onclick="deletePair('${p.id}')">🗑 削除</button></td></tr>`});document.getElementById('pairCount').textContent=`登録数：${getPairsFromList().length}ペア`;render()}
+
+function optimizeMatchOrder(rawMatches, allPairs) {
+    let ordered = [];
+    let pool = [...rawMatches];
+    let lastPlayed = {};
+    allPairs.forEach(p => lastPlayed[p] = -100);
+
+    let currentStep = 0;
+    while (pool.length > 0) {
+        let bestIdx = -1;
+        let bestScore = -Infinity;
+
+        for (let i = 0; i < pool.length; i++) {
+            const m = pool[i];
+            const lastA = lastPlayed[m.pairA];
+            const lastB = lastPlayed[m.pairB];
+
+            let penalty = 0;
+            if (currentStep - lastA <= 1 || currentStep - lastB <= 1) {
+                penalty = -20000;
+            }
+
+            let gapA = currentStep - lastA;
+            let gapB = currentStep - lastB;
+            let score = gapA + gapB + penalty;
+
+            if (score > bestScore) {
+                bestScore = score;
+                bestIdx = i;
+            }
+        }
+
+        if (bestIdx === -1) bestIdx = 0;
+
+        const chosen = pool.splice(bestIdx, 1)[0];
+        ordered.push(chosen);
+
+        lastPlayed[chosen.pairA] = currentStep;
+        lastPlayed[chosen.pairB] = currentStep;
+        currentStep++;
+    }
+
+    ordered.forEach((m, idx) => {
+        m.no = idx + 1;
+    });
+    return ordered;
+}
+
+function generateTournament(){
+    getSettings();
+    pairs=getPairsFromList();
+    if(pairs.length<2){alert('登録済みペアを2組以上登録してください。');return}
+    
+    let rawMatches=[];
+    for(let i=0;i<pairs.length;i++){
+        for(let j=i+1;j<pairs.length;j++){
+            rawMatches.push({id:uid(),no:0,pairA:pairs[i],pairB:pairs[j],status:'waiting',court:null,slot:null,scoreA:'',scoreB:'',winner:''})
+        }
+    }
+    
+    matches = optimizeMatchOrder(rawMatches, pairs);
+    lastFinishedPairs.clear();
+    assignMatches();
+    saveState(false);
+}
+
+function activePairSet(){
+    const set=new Set();
+    matches.filter(m=>m.status==='playing').forEach(m=>{set.add(m.pairA);set.add(m.pairB)});
+    return set;
+}
+
+function assignMatches(){
+    getSettings();
+    const occupied=new Set(matches.filter(m=>m.status==='playing').map(m=>`${m.court}-${m.slot}`));
+    let used=activePairSet();
+
+    const pairMatchCounts = {};
+    pairs.forEach(p => pairMatchCounts[p] = 0);
+    matches.forEach(m => {
+        if (m.status === 'playing' || m.status === 'done') {
+            pairMatchCounts[m.pairA]++;
+            pairMatchCounts[m.pairB]++;
+        }
+    });
+
+    for (let c=1;c<=settings.courtCount;c++){
+        for(let s=1;s<=settings.slotsPerCourt;s++){
+            if(occupied.has(`${c}-${s}`))continue;
+
+            let candidates = matches.filter(m => m.status === 'waiting' && !used.has(m.pairA) && !used.has(m.pairB));
+            if (candidates.length === 0) continue;
+
+            let bestMatch = null;
+            let bestScore = -Infinity;
+
+            for (let m of candidates) {
+                let score = 0;
+
+                if (lastFinishedPairs.has(m.pairA) || lastFinishedPairs.has(m.pairB)) {
+                    score -= 5000;
+                }
+
+                let totalPlayed = (pairMatchCounts[m.pairA] || 0) + (pairMatchCounts[m.pairB] || 0);
+                score -= totalPlayed * 100;
+                score -= m.no * 0.01;
+
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestMatch = m;
+                }
+            }
+
+            if (bestMatch) {
+                bestMatch.status='playing';
+                bestMatch.court=c;
+                bestMatch.slot=s;
+                used.add(bestMatch.pairA);
+                used.add(bestMatch.pairB);
+            }
+        }
+    }
+    render();
+    saveState(false);
+}
+
+function confirmResult(id){
+    const m=matches.find(x=>x.id===id);
+    if(!m)return;
+    const aRaw=document.getElementById('scoreA_'+id).value,bRaw=document.getElementById('scoreB_'+id).value;
+    if(aRaw===''||bRaw===''){alert('両方のスコアを入力してください。');return}
+    const a=Number(aRaw),b=Number(bRaw);
+    if(!Number.isInteger(a)||!Number.isInteger(b)||a<0||b<0||a>3||b>3){alert('スコアは0〜3の整数で入力してください。');return}
+    
+    m.scoreA=a;
+    m.scoreB=b;
+    m.status='done';
+    m.winner=a>b?m.pairA:(b>a?m.pairB:'引分');
+    m.court=null;
+    m.slot=null;
+
+    lastFinishedPairs = new Set([m.pairA, m.pairB]);
+    assignMatches();
+}
+
+function returnToWaiting(id){const m=matches.find(x=>x.id===id);if(!m)return;m.status='waiting';m.court=null;m.slot=null;m.scoreA='';m.scoreB='';m.winner='';lastFinishedPairs.clear();assignMatches()}
+function cancelPlaying(id){const m=matches.find(x=>x.id===id);if(!m)return;m.status='waiting';m.court=null;m.slot=null;lastFinishedPairs.clear();assignMatches()}
+function calcRanking(){const table={};pairs.forEach(p=>table[p]={pair:p,played:0,win:0,draw:0,lose:0,gf:0,ga:0,diff:0,winRate:0});matches.filter(m=>m.status==='done').forEach(m=>{const A=table[m.pairA],B=table[m.pairB];if(!A||!B)return;A.played++;B.played++;A.gf+=m.scoreA;A.ga+=m.scoreB;B.gf+=m.scoreB;B.ga+=m.scoreA;if(m.scoreA>m.scoreB){A.win++;B.lose++}else if(m.scoreB>m.scoreA){B.win++;A.lose++}else{A.draw++;B.draw++}});Object.values(table).forEach(r=>{r.diff=r.gf-r.ga;r.winRate=r.played===0?0:r.win/r.played});return Object.values(table).sort((a,b)=>b.winRate-a.winRate||b.diff-a.diff||b.gf-a.gf||a.pair.localeCompare(b.pair,'ja'))}
+function renderCourts(){const wrap=document.getElementById('courts');wrap.innerHTML='';for(let c=1;c<=settings.courtCount;c++){const court=document.createElement('div');court.className='court';court.innerHTML=`<div class="courtHead">コート ${c}</div>`;for(let s=1;s<=settings.slotsPerCourt;s++){const m=matches.find(x=>x.status==='playing'&&x.court===c&&x.slot===s);const div=document.createElement('div');div.className='slot'+(m?'':' empty');div.innerHTML=m?`<div class="matchTitle">第${m.no}試合 <span class="pill">枠 ${s}</span></div><div class="pair"><span class="pairName">${escapeHtml(m.pairA)}</span><span>vs</span></div><div class="pair"><span class="pairName">${escapeHtml(m.pairB)}</span></div><div class="scoreBox"><input type="number" id="scoreA_${m.id}" min="0" max="3" step="1" placeholder="0〜3"><input type="number" id="scoreB_${m.id}" min="0" max="3" step="1" placeholder="0〜3"></div><div class="smallBtns"><button class="ok" onclick="confirmResult('${m.id}')">結果確定</button><button class="light" onclick="cancelPlaying('${m.id}')">待機へ戻す</button></div>`:`<b>空き枠 ${s}</b><br><span class="note">投入可能な待機試合があれば自動で入ります</span>`;court.appendChild(div)}wrap.appendChild(court)}}
+
+function getCallableWaitingListSorted() {
+    const used = activePairSet();
+    let candidates = matches.filter(m => m.status === 'waiting' && !used.has(m.pairA) && !used.has(m.pairB));
+    
+    const pairMatchCounts = {};
+    pairs.forEach(p => pairMatchCounts[p] = 0);
+    matches.forEach(m => {
+        if (m.status === 'playing' || m.status === 'done') { pairMatchCounts[m.pairA]++; pairMatchCounts[m.pairB]++; }
+    });
+
+    return candidates.map(m => {
+        let score = 0;
+        if (lastFinishedPairs.has(m.pairA) || lastFinishedPairs.has(m.pairB)) score -= 5000;
+        let totalPlayed = (pairMatchCounts[m.pairA] || 0) + (pairMatchCounts[m.pairB] || 0);
+        score -= totalPlayed * 100;
+        score -= m.no * 0.01;
+        return { match: m, score: score };
+    }).sort((a, b) => b.score - a.score).map(x => x.match);
+}
+
+function renderWaitingArea(){
+    const next = getCallableWaitingListSorted(), all = matches.filter(m=>m.status==='waiting');
+    const make=list=>list.length?list.map((m,i)=>`<div class="waitingItem">${i+1}. 第${m.no}試合 ${escapeHtml(m.pairA)} vs ${escapeHtml(m.pairB)}</div>`).join(''):'<p class="note">該当する待機試合はありません。</p>';
+    document.getElementById('waitingArea').innerHTML=`<div class="waitingGrid"><div class="waitingBox"><h3>🥇 次に入れる試合 (待機数調整済)</h3>${make(next.slice(0,4))}</div><div class="waitingBox"><h3>🥈 全待機リスト</h3>${make(all.slice(0,8))}</div></div>`}
+function renderRanking(){const rows=calcRanking();document.getElementById('ranking').innerHTML=rows.length?`<table><thead><tr><th>順位</th><th>ペア</th><th class="right">勝率</th><th class="right">試合</th><th class="right">勝</th><th class="right">分</th><th class="right">敗</th><th class="right">得点</th><th class="right">失点</th><th class="right">差</th></tr></thead><tbody>`+rows.map((r,i)=>`<tr><td class="center">${i+1}</td><td>${escapeHtml(r.pair)}</td><td class="right"><b>${(r.winRate*100).toFixed(1)}%</b></td><td class="right">${r.played}</td><td class="right">${r.win}</td><td class="right">${r.draw}</td><td class="right">${r.lose}</td><td class="right">${r.gf}</td><td class="right">${r.ga}</td><td class="right">${r.diff}</td></tr>`).join('')+'</tbody></table>':'<p class="note">まだ順位表はありません。</p>'}
+function renderMatchList(){const label={waiting:'待機',playing:'試合中',done:'完了'},cls={waiting:'statusWaiting',playing:'statusPlaying',done:'statusDone'};document.getElementById('matchList').innerHTML=matches.length?`<table><thead><tr><th>No</th><th>対戦</th><th>状態</th><th>割当</th><th>結果</th><th>操作</th></tr></thead><tbody>`+matches.map(m=>`<tr><td>${m.no}</td><td>${escapeHtml(m.pairA)} vs ${escapeHtml(m.pairB)}</td><td class="${cls[m.status]}">${label[m.status]}</td><td>${m.status==='playing'?`コート${m.court} / 枠${m.slot}`:'-'}</td><td>${m.status==='done'?`${m.scoreA} - ${m.scoreB}<br>勝者：${escapeHtml(m.winner)}`:'-'}</td><td>${m.status==='done'?`<button class="light" onclick="returnToWaiting('${m.id}')">結果取消</button>`:''}</td></tr>`).join('')+'</tbody></table>':'<p class="note">まだ対戦は作成されていません。</p>'}
+function renderStats(){document.getElementById('totalMatches').textContent=matches.length;document.getElementById('playingMatches').textContent=matches.filter(m=>m.status==='playing').length;document.getElementById('waitingMatches').textContent=matches.filter(m=>m.status==='waiting').length;document.getElementById('doneMatches').textContent=matches.filter(m=>m.status==='done').length}
+function renderMonitor(){const wrap=document.getElementById('monitorCourts');wrap.innerHTML='';for(let c=1;c<=settings.courtCount;c++){const court=document.createElement('div');court.className='monitorCourt';court.innerHTML=`<div class="courtHead">コート ${c}</div>`;for(let s=1;s<=settings.slotsPerCourt;s++){const m=matches.find(x=>x.status==='playing'&&x.court===c&&x.slot===s);const slot=document.createElement('div');slot.className='monitorSlot';slot.innerHTML=m?`<div class="monitorSlotLabel">枠 ${s} 第${m.no}試合</div><div class="monitorPair">${escapeHtml(m.pairA)}</div><div class="monitorVs">VS</div><div class="monitorPair">${escapeHtml(m.pairB)}</div>`:`<div class="monitorEmpty">空き枠 ${s}</div>`;court.appendChild(slot)}wrap.appendChild(court)}const next=getCallableWaitingListSorted().slice(0,6);document.getElementById('monitorNext').innerHTML=next.length?next.map((m,i)=>`<div class="monitorNext"><span class="monitorNextNo">NEXT ${i+1}</span><div class="monitorNextPair">${escapeHtml(m.pairA)}</div><div class="monitorVs">VS</div><div class="monitorNextPair">${escapeHtml(m.pairB)}</div></div>`).join(''):`<div class="monitorNext"><span class="monitorNextNo">NEXT</span><div class="monitorNextPair">現在、呼び出し可能な待機試合はありません</div></div>`;document.getElementById('monitorSummary').textContent=`総試合 ${matches.length} / 完了 ${matches.filter(m=>m.status==='done').length} / 待機 ${matches.filter(m=>m.status==='waiting').length}`}
+function render(){getSettings();renderStats();renderCourts();renderWaitingArea();renderRanking();renderMatchList();renderMonitor();updateClock();document.getElementById('pairCount').textContent=`登録数：${getPairsFromList().length}ペア`}
+function saveState(show){localStorage.setItem('roundRobinFinalComplete',JSON.stringify({pairEntries,pairs,matches,settings}));if(show)showToast('保存しました')}function loadState(){const raw=localStorage.getItem('roundRobinFinalComplete');if(!raw){alert('保存データがありません。');return}const d=JSON.parse(raw);pairEntries=d.pairEntries||[];pairs=d.pairs||[];matches=d.matches||[];settings=d.settings||settings;document.getElementById('courtCount').value=settings.courtCount||2;document.getElementById('slotsPerCourt').value=settings.slotsPerCourt||2;renderPairList();render();showToast('復元しました')}function loadStateSilently(){const raw=localStorage.getItem('roundRobinFinalComplete');if(!raw)return;try{const d=JSON.parse(raw);pairEntries=d.pairEntries||[];pairs=d.pairs||[];matches=d.matches||[];settings=d.settings||settings;document.getElementById('courtCount').value=settings.courtCount||2;document.getElementById('slotsPerCourt').value=settings.slotsPerCourt||2;renderPairList()}catch(e){}}
+function resetAll(){if(!confirm('すべてのペア・対戦・結果をリセットしますか？'))return;pairEntries=[];pairs=[];matches=[];lastFinishedPairs.clear();localStorage.removeItem('roundRobinFinalComplete');renderPairList();render();showToast('リセットしました')}
+function exportCSV(){const header=['No','ペアA','ペアB','状態','コート','枠','得点A','得点B','勝者'];const rows=matches.map(m=>[m.no,m.pairA,m.pairB,m.status,m.court||'',m.slot||'',m.scoreA,m.scoreB,m.winner]);const csv=[header,...rows].map(r=>r.map(v=>'"'+String(v??'').replaceAll('"','""')+'"').join(',')).join('\n');const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8;'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='対戦結果.csv';a.click();URL.revokeObjectURL(url)}
+function showTab(tab){document.getElementById('adminView').classList.toggle('hidden',tab!=='admin');document.getElementById('monitorView').classList.toggle('hidden',tab!=='monitor');document.getElementById('adminTab').classList.toggle('active',tab==='admin');document.getElementById('monitorTab').classList.toggle('active',tab==='monitor');render()}function toggleFullscreen(){const el=document.getElementById('monitorView');if(!document.fullscreenElement){el.requestFullscreen?.()}else{document.exitFullscreen?.()}}function updateClock(){document.getElementById('monitorClock').textContent=new Date().toLocaleString('ja-JP',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>{t.style.display='none'},2200)}function escapeHtml(str){return String(str??'').replace(/[&<>'"]/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s]))}function escapeAttr(str){return escapeHtml(str)}
+window.addEventListener('load',()=>{loadStateSilently();renderPairList();render();setInterval(updateClock,30000)});
+</script>
+</body>
+</html>
